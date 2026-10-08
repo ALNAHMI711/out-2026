@@ -1,0 +1,7 @@
+"use client";
+import {useState} from "react";
+export default function Home(){
+ const[p,setP]=useState(""),[e,setE]=useState(""),[busy,setBusy]=useState(false);
+ async function submit(ev){ev.preventDefault();setBusy(true);setE("");try{const r=await fetch("/api/auth/login",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({password:p})});const d=await r.json();if(!r.ok)throw new Error(d.error||"فشل الدخول");location.assign(d.redirect)}catch(x){setE(x.message)}finally{setBusy(false)}}
+ return <main className="min-h-screen flex items-center justify-center p-6"><form onSubmit={submit} className="glass rounded-2xl p-8 w-full max-w-md"><h1 className="text-5xl font-black gold-gradient mb-3">OUT 2026</h1><h2 className="text-2xl font-bold mb-2">ارحب ياوجه النقاء ✨</h2><p className="text-out-silver mb-6">دخول آمن إلى لوحة التحكم</p><input autoComplete="current-password" type="password" value={p} onChange={x=>setP(x.target.value)} placeholder="كلمة السر" className="w-full bg-out-card border border-out-border rounded-xl p-3 mb-3" required/>{e&&<p className="text-red-400 text-sm mb-3">{e}</p>}<button disabled={busy} className="w-full bg-out-gold text-black font-bold rounded-xl p-3">{busy?"جارٍ التحقق…":"دخول آمن"}</button></form></main>
+}
