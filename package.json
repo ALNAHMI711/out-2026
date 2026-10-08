@@ -1,0 +1,34 @@
+{
+  "name": "out-2026",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OUT 2026 - Premium POD Automation System",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.43.0",
+    "axios": "^1.7.0",
+    "bcryptjs": "^2.4.3",
+    "framer-motion": "^11.2.0",
+    "i18next": "^23.11.0",
+    "jose": "^5.10.0",
+    "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.379.0",
+    "next": "14.2.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "react-i18next": "^14.1.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.19",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.0",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.0"
+  }
+}
