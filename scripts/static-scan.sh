@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -u
-ROOT="\${1:-.}"; ISSUES=0
+ROOT="${1:-.}"; ISSUES=0
 scan(){ local label="$1" pattern="$2"; shift 2; if grep -RInE --include='*.js' --include='*.jsx' --include='*.ts' --include='*.tsx' "$pattern" "$@" 2>/dev/null; then echo "❌ $label"; ISSUES=$((ISSUES+1)); else echo "✅ $label"; fi; }
 echo "🔍 Static scan: $ROOT"
 # Only flag a broken API URL when it starts as a normal quoted string.
-# A backtick template literal such as \`/api/products?\${...}\` is valid.
-scan "Possible broken API template literal" "['\"]/api/[A-Za-z0-9_/-]+\\?\\\$\\{" "$ROOT/app" "$ROOT/components" "$ROOT/lib"
+# A backtick template literal such as `/api/products?${...}` is valid.
+scan "Possible broken API template literal" "[\"']/api/[A-Za-z0-9_/-]+\\?\\$\\{" "$ROOT/app" "$ROOT/components" "$ROOT/lib"
 scan "useState callback contains side-effect API" 'useState\\(\\(\\) *=> *\\{' "$ROOT/app" "$ROOT/components"
 scan "Hard-coded secret pattern" '(sk_live|sk_test|SUPABASE_SERVICE_ROLE_KEY[[:space:]]*=[[:space:]]*['"'"'"][^'"'"'"]+|password[[:space:]]*=[[:space:]]*['"'"'"][^'"'"'"]{8,})' "$ROOT/app" "$ROOT/components" "$ROOT/lib"
 echo "Checking client-hook files..."
