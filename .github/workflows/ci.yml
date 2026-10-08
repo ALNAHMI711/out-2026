@@ -15,8 +15,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      - name: ESLint (advisory)
-        run: npm run lint
-        continue-on-error: true
+      - name: ESLint
+        run: npm run lint -- --max-warnings=0
       - name: Static scan
         run: npm run scan
