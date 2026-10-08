@@ -1,0 +1,1 @@
+export default function Production(){return <main className="min-h-screen bg-out-black p-6"><h1 className="text-4xl font-black gold-gradient mb-2">لوحة إنتاج الذكاء الاصطناعي</h1><p className="text-out-silver">Protected production area</p></main>}
