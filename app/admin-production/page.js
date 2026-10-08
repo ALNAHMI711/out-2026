@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Palette, Upload, FolderOpen, Sparkles, Globe, RefreshCw, Loader2, AlertCircle } from 'lucide-react';
@@ -50,7 +51,7 @@ export default function AdminProductionPage() {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <motion.div initial={{opacity:0}} animate={{opacity:1}} className="lg:col-span-2 glass rounded-2xl p-6">
         <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2"><Palette className="w-5 h-5 text-out-gold"/>أحدث التصاميم</h2>
-        {designs.length === 0 ? <div className="text-center py-12 text-out-silver/60"><Palette className="w-12 h-12 mx-auto mb-3 opacity-30"/><p>لا توجد تصاميم مولدة في هذه الجلسة.</p><p className="text-xs mt-2">الإحصائيات أعلاه تأتي مباشرة من قاعدة البيانات.</p></div> : <div className="grid grid-cols-2 md:grid-cols-3 gap-3">{designs.slice(0,9).map((d)=><div key={d.id || d.image_url} className="relative aspect-square rounded-xl overflow-hidden border border-out-border"><img src={d.image_url} alt={d.title || 'OUT design'} className="w-full h-full object-cover" loading="lazy"/></div>)}</div>}
+        {designs.length === 0 ? <div className="text-center py-12 text-out-silver/60"><Palette className="w-12 h-12 mx-auto mb-3 opacity-30"/><p>لا توجد تصاميم مولدة في هذه الجلسة.</p><p className="text-xs mt-2">الإحصائيات أعلاه تأتي مباشرة من قاعدة البيانات.</p></div> : <div className="grid grid-cols-2 md:grid-cols-3 gap-3">{designs.slice(0,9).map((d)=><div key={d.id || d.image_url} className="relative aspect-square rounded-xl overflow-hidden border border-out-border"><Image src={d.image_url} alt={d.title || 'OUT design'} fill sizes="(max-width: 1024px) 50vw, 66vw" className="object-cover" loading="lazy"/></div>)}</div>}
       </motion.div>
       <div>
         <SuitcaseLock lockId="pod_sites" title="مواقع POD"><div className="space-y-2 max-h-80 overflow-y-auto">{Object.entries(platformStatus).map(([key,p])=><div key={key} className="bg-out-card border border-out-border rounded-lg p-3 flex justify-between items-center gap-3"><div><p className="text-white text-sm font-bold">{p.name}</p><p className="text-out-silver/60 text-xs">{p.description || p.apiType || 'منصة POD'}</p></div><span className={p.configured ? 'text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400' : 'text-xs px-2 py-1 rounded-full bg-out-silver/20 text-out-silver'}>{p.configured ? 'مهيأ' : 'غير مهيأ'}</span></div>)}</div></SuitcaseLock>
