@@ -14,5 +14,8 @@ jobs:
           node-version: 20
       - run: npm install
       - run: npm run build
+      - name: ESLint (advisory)
+        run: npm run lint
+        continue-on-error: true
       - name: Static scan
         run: npm run scan
