@@ -3,13 +3,17 @@ import { jwtVerify } from "jose";
 
 const rules = [["/admin-production", "production"], ["/admin-marketing", "marketing"]];
 const protectedApi = [
-  ["/api/designs", ["POST"]],
-  ["/api/pod", ["GET","POST","PUT","DELETE"]],
-  ["/api/social", ["GET","POST"]],
-  ["/api/stats", ["GET"]],
-  ["/api/products", ["POST","PUT","PATCH","DELETE"]],
-  ["/api/orders", ["GET","PUT","PATCH","DELETE"]]
+  ["/api/designs", ["POST"], "production"],
+  ["/api/pod", ["GET", "POST", "PUT", "PATCH", "DELETE"], "production"],
+  ["/api/social", ["GET", "POST", "PUT", "PATCH", "DELETE"], "marketing"],
+  ["/api/stats", ["GET"], "production"],
+  ["/api/products", ["POST", "PUT", "PATCH", "DELETE"], "production"],
+  ["/api/orders", ["GET", "PUT", "PATCH", "DELETE"], "production"]
 ];
+
+function apiAllowed(payload, area) {
+  return payload.role === "owner" || payload.area === area;
+}
 
 export async function middleware(req) {
   const path = req.nextUrl.pathname, method = req.method;
@@ -24,10 +28,20 @@ export async function middleware(req) {
 
   try {
     if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET missing");
-    const { payload } = await jwtVerify(token, new TextEncoder().encode(process.env.JWT_SECRET), { issuer: "out-2026" });
+    const { payload } = await jwtVerify(
+      token,
+      new TextEncoder().encode(process.env.JWT_SECRET),
+      { issuer: "out-2026" }
+    );
+
     if (pageRule && payload.role !== "owner" && payload.area !== pageRule[1]) {
       return NextResponse.redirect(new URL("/", req.url));
     }
+
+    if (apiRule && !apiAllowed(payload, apiRule[2])) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     return NextResponse.next();
   } catch {
     const res = pageRule
@@ -40,8 +54,8 @@ export async function middleware(req) {
 
 export const config = {
   matcher: [
-    "/admin-production/:path*","/admin-marketing/:path*",
-    "/api/designs/:path*","/api/pod/:path*","/api/orders/:path*",
-    "/api/social/:path*","/api/stats/:path*","/api/products/:path*"
+    "/admin-production/:path*", "/admin-marketing/:path*",
+    "/api/designs/:path*", "/api/pod/:path*", "/api/orders/:path*",
+    "/api/social/:path*", "/api/stats/:path*", "/api/products/:path*"
   ]
 };
