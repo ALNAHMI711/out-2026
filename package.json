@@ -10,7 +10,8 @@
     "lint": "next lint",
     "smoke": "bash scripts/smoke-test.sh",
     "scan": "bash scripts/static-scan.sh",
-    "preflight": "npm run scan && npm run smoke"
+    "preflight": "npm run scan && npm run smoke",
+    "audit:prod": "npm audit --production --audit-level=high"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.43.0",
