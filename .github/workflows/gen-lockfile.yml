@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - "package.json"
       - ".github/workflows/gen-lockfile.yml"
 
 permissions:
@@ -29,11 +30,14 @@ jobs:
           echo "📋 Lines: $(wc -l < package-lock.json)"
           node -e "const p=require('./package-lock.json'); console.log('lockfileVersion:', p.lockfileVersion); console.log('name:', p.name); console.log('deps:', Object.keys(p.packages||{}).length)"
 
+      - name: Verify Next.js version
+        run: |
+          node -e "const pkg=require('./package.json'); const lock=require('./package-lock.json'); const spec=pkg.dependencies.next; const locked=lock.packages['node_modules/next']?.version; console.log('next in pkg:', spec, '→ locked:', locked); if(spec !== '14.2.35' || locked !== '14.2.35') process.exit(1);"
+
       - name: Verify reproducibility
         run: |
           rm -rf node_modules
           npm ci
-          node -e "const pkg=require('./package.json'); const lock=require('./package-lock.json'); const spec=pkg.dependencies.next; const locked=lock.packages['node_modules/next']?.version; console.log('next in pkg:', spec, '→ locked:', locked); if(!locked) process.exit(1);"
 
       - name: Commit lockfile
         run: |
