@@ -1,0 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Inter:wght@300;400;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root{--out-gold:#d4af37;--out-black:#0a0a0a}
+*{box-sizing:border-box;padding:0;margin:0}
+html,body{max-width:100vw;overflow-x:hidden;background:var(--out-black);color:#fff;font-family:Cairo,Inter,sans-serif}
+[dir=rtl]{direction:rtl;text-align:right}
+.gold-gradient{background:linear-gradient(135deg,#f4d47c,#d4af37 50%,#8b7326);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.glass{background:rgba(26,26,26,.7);backdrop-filter:blur(12px);border:1px solid rgba(212,175,55,.2)}
