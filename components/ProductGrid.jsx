@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Heart, Star } from 'lucide-react';
+import { formatPrice } from '@/lib/safe-format';
 
 export default function ProductGrid({ category = null, search = '', onAddToCart }) {
   const [products,setProducts]=useState([]),[loading,setLoading]=useState(true),[error,setError]=useState('');
