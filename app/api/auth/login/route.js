@@ -24,7 +24,19 @@ export async function POST(req){
     ];
     let area=null,role=null;
     for(const [a,h] of configs) if(h&&await bcrypt.compare(password,h)){area=a;role=a==="owner"?"owner":"admin";break}
-    if(!area){register(ipv);return NextResponse.json({error:"بيانات غير صحيحة"},{status:401})}
+    if(!area){
+      // Diagnostics stay in server logs; never expose environment configuration to unauthenticated clients.
+      console.warn("[auth/login] Authentication failed", {
+        inputLength: password.length,
+        configuredHashes: {
+          production: Boolean(process.env.OUT_PRODUCTION_PASSWORD_HASH),
+          marketing: Boolean(process.env.OUT_MARKETING_PASSWORD_HASH),
+          master: Boolean(process.env.OUT_MASTER_PASSWORD_HASH)
+        }
+      });
+      register(ipv);
+      return NextResponse.json({error:"بيانات غير صحيحة"},{status:401});
+    }
     if(!process.env.JWT_SECRET) throw new Error("JWT_SECRET missing");
     const token=await new SignJWT({role,area}).setProtectedHeader({alg:"HS256"}).setIssuedAt().setExpirationTime("24h").setIssuer("out-2026").sign(new TextEncoder().encode(process.env.JWT_SECRET));
     const res=NextResponse.json({success:true,redirect:area==="marketing"?"/admin-marketing":"/admin-production"});
