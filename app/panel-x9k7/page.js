@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Palette, Upload, FolderOpen, Sparkles, Globe, RefreshCw, Loader2, AlertCircle, Settings, X, Eye, EyeOff, Save, ArrowRight, LockKeyhole } from 'lucide-react';
+import { Palette, Upload, FolderOpen, Sparkles, Globe, RefreshCw, Loader2, AlertCircle, Settings, X, Save, ArrowRight, LockKeyhole } from 'lucide-react';
 import StatsCard from '@/components/StatsCard';
 import SuitcaseLock from '@/components/SuitcaseLock';
 import PodConfigManager from '@/components/PodConfigManager';
@@ -12,25 +12,23 @@ import ApiKeySettings from '@/components/ApiKeySettings';
 const EMPTY_SETTINGS = { brandLogo: '', brandTitle: '', email: '' };
 
 export default function AdminProductionPage() {
-  const [stats, setStats] = useState(null), [platformStatus, setPlatformStatus] = useState({});
+  const [stats, setStats] = useState(null);
   const [designs, setDesigns] = useState([]), [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false), [error, setError] = useState('');
   const [settingsOpen, setSettingsOpen] = useState(false), [settingsUnlocked, setSettingsUnlocked] = useState(false);
+  const [settingsLockToken, setSettingsLockToken] = useState('');
   const [settingsPassword, setSettingsPassword] = useState(''), [settingsError, setSettingsError] = useState('');
   const [settings, setSettings] = useState(EMPTY_SETTINGS), [settingsNotice, setSettingsNotice] = useState('');
-  const [showPodPassword, setShowPodPassword] = useState(false), [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsSaving, setSettingsSaving] = useState(false);
   const passwordRef = useRef(null);
 
   async function loadStats() {
     setLoading(true); setError('');
     try {
-      const [statsRes, podRes] = await Promise.all([
-        fetch('/api/stats', { credentials: 'include', cache: 'no-store' }),
-        fetch('/api/pod/status', { credentials: 'include', cache: 'no-store' })
-      ]);
-      const sd = await statsRes.json().catch(() => ({})), pd = await podRes.json().catch(() => ({}));
+      const statsRes = await fetch('/api/stats', { credentials: 'include', cache: 'no-store' });
+      const sd = await statsRes.json().catch(() => ({}));
       if (!statsRes.ok) throw new Error(sd.error || 'فشل جلب الإحصائيات');
-      setStats(sd); setPlatformStatus(pd.status || {});
+      setStats(sd);
     } catch (e) { setError(e.message || 'فشل تحميل البيانات'); }
     finally { setLoading(false); }
   }
@@ -73,6 +71,7 @@ export default function AdminProductionPage() {
         return;
       }
       setSettingsUnlocked(true);
+      setSettingsLockToken(data.sessionToken || '');
       setSettingsPassword('');
       setSettingsNotice('');
     } catch {
@@ -88,7 +87,7 @@ export default function AdminProductionPage() {
   async function saveSettings(event) {
     event.preventDefault(); setSettingsSaving(true); setSettingsError(''); setSettingsNotice('');
     try {
-      const response = await fetch('/api/brand-settings', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brandTitle: settings.brandTitle, email: settings.email, brandLogo: settings.brandLogo }) });
+      const response = await fetch('/api/brand-settings', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json', 'X-Lock-Session': settingsLockToken }, body: JSON.stringify({ brandTitle: settings.brandTitle, email: settings.email, brandLogo: settings.brandLogo }) });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'تعذر حفظ الإعدادات');
       setSettings({ ...EMPTY_SETTINGS, ...(data.settings || {}) }); setSettingsNotice('تم حفظ الإعدادات في قاعدة البيانات.');
@@ -98,12 +97,12 @@ export default function AdminProductionPage() {
 
   async function uploadBrandLogo(event) {
     const file = event.target.files && event.target.files[0]; if (!file) return;
-    if (!['image/png','image/jpeg','image/webp','image/svg+xml'].includes(file.type)) { setSettingsError('الصيغ المسموحة PNG/JPEG/WEBP/SVG'); return; }
+    if (!['image/png','image/jpeg','image/webp',].includes(file.type)) { setSettingsError('الصيغ المسموحة PNG/JPEG/WEBP'); return; }
     if (file.size > 2 * 1024 * 1024) { setSettingsError('الحد الأقصى للصورة 2 ميغابايت'); return; }
     setSettingsSaving(true); setSettingsError(''); setSettingsNotice('');
     try {
       const dataUrl = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); });
-      const response = await fetch('/api/brand-settings', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ logoDataUrl: dataUrl }) });
+      const response = await fetch('/api/brand-settings', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json', 'X-Lock-Session': settingsLockToken }, body: JSON.stringify({ logoDataUrl: dataUrl }) });
       const data = await response.json().catch(() => ({})); if (!response.ok) throw new Error(data.error || 'فشل رفع الشعار');
       setSettings(current => ({ ...current, ...(data.settings || {}) })); setSettingsNotice('تم رفع الشعار وحفظ رابطه في قاعدة البيانات.');
     } catch (e) { setSettingsError(e.message || 'فشل رفع الشعار'); }
@@ -111,7 +110,7 @@ export default function AdminProductionPage() {
   }
 
   function closeSettings() {
-    setSettingsOpen(false); setSettingsUnlocked(false); setSettingsPassword('');
+    setSettingsOpen(false); setSettingsUnlocked(false); setSettingsLockToken(''); setSettingsPassword('');
     setSettingsError(''); setSettingsNotice('');
   }
 
@@ -149,7 +148,7 @@ export default function AdminProductionPage() {
             <div className="flex gap-3 mt-5"><button type="button" onClick={closeSettings} className="flex-1 rounded-xl border border-out-border px-4 py-3 text-out-silver hover:border-out-gold">رجوع</button><button type="submit" disabled={!settingsPassword || settingsSaving} className="flex-1 rounded-xl bg-gradient-to-r from-out-gold to-out-gold-light px-4 py-3 font-bold text-out-black disabled:opacity-50">تحقق وفتح</button></div>
           </div>
         </form> : <form onSubmit={saveSettings} className="p-5 md:p-7 space-y-5">
-          <div><label htmlFor="brand-logo-file" className="block text-sm font-bold text-out-silver mb-2">شعار البراند</label><label className="inline-flex items-center gap-2 rounded-xl border border-out-gold/60 bg-out-card px-4 py-3 text-out-gold font-bold cursor-pointer"><Upload className="w-5 h-5" />📤 رفع صورة<input id="brand-logo-file" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={uploadBrandLogo} disabled={settingsSaving} className="sr-only" /></label>{settings.brandLogo && <div className="mt-3 flex items-center gap-3"><img src={settings.brandLogo} alt="معاينة شعار البراند" className="h-20 w-20 rounded-xl border border-out-border bg-white object-contain p-2" /><span className="text-xs text-green-400 break-all">رابط الصورة محفوظ</span></div>}<p className="mt-2 text-xs text-out-silver/70">PNG/JPEG/WEBP/SVG — حتى 2 ميغابايت.</p></div>
+          <div><label htmlFor="brand-logo-file" className="block text-sm font-bold text-out-silver mb-2">شعار البراند</label><label className="inline-flex items-center gap-2 rounded-xl border border-out-gold/60 bg-out-card px-4 py-3 text-out-gold font-bold cursor-pointer"><Upload className="w-5 h-5" />📤 رفع صورة<input id="brand-logo-file" type="file" accept="image/png,image/jpeg,image/webp" onChange={uploadBrandLogo} disabled={settingsSaving} className="sr-only" /></label>{settings.brandLogo && <div className="mt-3 flex items-center gap-3"><Image unoptimized src={settings.brandLogo} alt="معاينة شعار البراند" width={80} height={80} className="h-20 w-20 rounded-xl border border-out-border bg-white object-contain p-2" /><span className="text-xs text-green-400 break-all">رابط الصورة محفوظ</span></div>}<p className="mt-2 text-xs text-out-silver/70">PNG/JPEG/WEBP — حتى 2 ميغابايت.</p></div>
           <div><label htmlFor="brand-title" className="block text-sm font-bold text-out-silver mb-2">عنوان البراند</label><input id="brand-title" type="text" value={settings.brandTitle} onChange={(event) => updateSetting('brandTitle', event.target.value)} maxLength={120} placeholder="OUT PREMIUM CRAFTSMANSHIP & APEX" className="w-full rounded-xl border border-out-border bg-out-card px-4 py-3 text-white outline-none focus:border-out-gold" /></div>
           <div><label htmlFor="brand-email" className="block text-sm font-bold text-out-silver mb-2">البريد الإلكتروني</label><input id="brand-email" type="email" value={settings.email} onChange={(event) => updateSetting('email', event.target.value)} maxLength={254} placeholder="you@example.com" className="w-full rounded-xl border border-out-border bg-out-card px-4 py-3 text-white outline-none focus:border-out-gold" /></div>
           <ApiKeySettings />
