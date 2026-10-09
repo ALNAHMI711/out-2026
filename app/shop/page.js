@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Search, ShoppingCart, Globe } from 'lucide-react';
+import { Search, ShoppingCart } from 'lucide-react';
 import ProductGrid from '@/components/ProductGrid';
 import CartDrawer, { addToCart } from '@/components/CartDrawer';
 import { useRouter } from 'next/navigation';
@@ -53,7 +53,6 @@ export default function ShopPage() {
             <input type="search" placeholder="ابحث عن تصميم..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full bg-out-card border border-out-border rounded-full py-2 pr-12 pl-4 text-white placeholder-out-silver focus:outline-none focus:border-out-gold" />
           </div>
           <div className="flex items-center gap-3">
-            <button type="button" onClick={() => router.push('/')} className="p-2 bg-out-card border border-out-border rounded-lg text-out-gold hover:border-out-gold" aria-label="الرئيسية"><Globe className="w-4 h-4" /></button>
             <button type="button" onClick={() => setCartOpen(true)} className="relative p-2 bg-out-card border border-out-border rounded-lg text-out-gold hover:border-out-gold" aria-label="السلة">
               <ShoppingCart className="w-5 h-5" />
               {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-out-gold text-out-black text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">{cartCount}</span>}

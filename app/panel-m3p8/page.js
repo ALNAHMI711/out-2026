@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { DollarSign, TrendingUp, Users, ShoppingCart, Instagram, Facebook, Youtube, Music, Share2, Bot, RefreshCw, AlertCircle, ShieldCheck, Activity } from 'lucide-react';
@@ -25,6 +26,12 @@ export default function AdminMarketingPage() {
   const visitors=stats?.stats?.daily?.visitors;
   const orders=financial.totalOrders;
   return <div className="min-h-screen bg-out-black p-4 md:p-6" dir="rtl">
+    <nav aria-label="تنقل الإدارة" className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-out-gold/25 bg-out-card/80 p-3">
+      <Link href="/panel-x9k7" className="rounded-xl border border-out-gold/40 px-4 py-2 text-sm font-bold text-out-gold hover:bg-out-gold/10">🎨 لوحة الإنتاج</Link>
+      <Link href="/panel-m3p8" className="rounded-xl border border-out-gold/40 px-4 py-2 text-sm font-bold text-out-gold hover:bg-out-gold/10">📣 لوحة التسويق</Link>
+      <Link href="/shop" className="rounded-xl border border-out-border px-4 py-2 text-sm text-out-silver hover:border-out-gold hover:text-out-gold">🛒 المتجر</Link>
+      <Link href="/" className="mr-auto rounded-xl border border-red-500/40 px-4 py-2 text-sm text-red-300 hover:bg-red-500/10">🚪 خروج</Link>
+    </nav>
     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8"><div><h1 className="text-3xl md:text-4xl font-black gold-gradient mb-1">لوحة الإدارة والتسويق</h1><p className="text-out-silver text-sm">OUT 2026 | Hyper-Automation OS</p></div><button onClick={loadAll} disabled={loading} aria-label="تحديث لوحة التسويق" className="px-4 py-3 bg-out-card border border-out-border text-out-silver rounded-xl hover:border-out-gold"><RefreshCw className={loading?'w-5 h-5 animate-spin':'w-5 h-5'}/></button></div>
     {error&&<div className="mb-6 bg-red-500/10 border border-red-500/40 rounded-xl p-4 text-red-400 flex items-center gap-2"><AlertCircle className="w-4 h-4"/>{error}</div>}
 

@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
@@ -115,6 +116,12 @@ export default function AdminProductionPage() {
 
   const bestCategory = Object.entries(stats?.categoryCounts || {}).sort((a,b) => b[1] - a[1])[0];
   return <div className="min-h-screen bg-out-black p-4 md:p-6" dir="rtl">
+    <nav aria-label="تنقل الإدارة" className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-out-gold/25 bg-out-card/80 p-3">
+      <Link href="/panel-x9k7" className="rounded-xl border border-out-gold/40 px-4 py-2 text-sm font-bold text-out-gold hover:bg-out-gold/10">🎨 لوحة الإنتاج</Link>
+      <Link href="/panel-m3p8" className="rounded-xl border border-out-gold/40 px-4 py-2 text-sm font-bold text-out-gold hover:bg-out-gold/10">📣 لوحة التسويق</Link>
+      <Link href="/shop" className="rounded-xl border border-out-border px-4 py-2 text-sm text-out-silver hover:border-out-gold hover:text-out-gold">🛒 المتجر</Link>
+      <Link href="/" className="mr-auto rounded-xl border border-red-500/40 px-4 py-2 text-sm text-red-300 hover:bg-red-500/10">🚪 خروج</Link>
+    </nav>
     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
       <div><h1 className="text-3xl md:text-4xl font-black gold-gradient mb-1">لوحة إنتاج الذكاء الاصطناعي</h1><p className="text-out-silver text-sm">OUT 2026 | AI Graphics Engine</p></div>
       <div className="flex flex-wrap gap-3">
