@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Palette, Upload, FolderOpen, Sparkles, Globe, RefreshCw, Loader2, AlertCircle, Settings, X, Eye, EyeOff, Save, ArrowRight, LockKeyhole } from 'lucide-react';
+import { Palette, Upload, FolderOpen, Sparkles, Globe, RefreshCw, Loader2, AlertCircle, Settings, X, Save, ArrowRight, LockKeyhole } from 'lucide-react';
 import StatsCard from '@/components/StatsCard';
 import SuitcaseLock from '@/components/SuitcaseLock';
 import PodConfigManager from '@/components/PodConfigManager';
@@ -12,25 +12,22 @@ import ApiKeySettings from '@/components/ApiKeySettings';
 const EMPTY_SETTINGS = { brandLogo: '', brandTitle: '', email: '' };
 
 export default function AdminProductionPage() {
-  const [stats, setStats] = useState(null), [platformStatus, setPlatformStatus] = useState({});
+  const [stats, setStats] = useState(null);
   const [designs, setDesigns] = useState([]), [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false), [error, setError] = useState('');
   const [settingsOpen, setSettingsOpen] = useState(false), [settingsUnlocked, setSettingsUnlocked] = useState(false);
   const [settingsPassword, setSettingsPassword] = useState(''), [settingsError, setSettingsError] = useState('');
   const [settings, setSettings] = useState(EMPTY_SETTINGS), [settingsNotice, setSettingsNotice] = useState('');
-  const [showPodPassword, setShowPodPassword] = useState(false), [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsSaving, setSettingsSaving] = useState(false);
   const passwordRef = useRef(null);
 
   async function loadStats() {
     setLoading(true); setError('');
     try {
-      const [statsRes, podRes] = await Promise.all([
-        fetch('/api/stats', { credentials: 'include', cache: 'no-store' }),
-        fetch('/api/pod/status', { credentials: 'include', cache: 'no-store' })
-      ]);
-      const sd = await statsRes.json().catch(() => ({})), pd = await podRes.json().catch(() => ({}));
+      const statsRes = await fetch('/api/stats', { credentials: 'include', cache: 'no-store' });
+      const sd = await statsRes.json().catch(() => ({}));
       if (!statsRes.ok) throw new Error(sd.error || 'فشل جلب الإحصائيات');
-      setStats(sd); setPlatformStatus(pd.status || {});
+      setStats(sd);
     } catch (e) { setError(e.message || 'فشل تحميل البيانات'); }
     finally { setLoading(false); }
   }
