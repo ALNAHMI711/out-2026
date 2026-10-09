@@ -39,7 +39,7 @@ export default function AdminMarketingPage() {
 
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <motion.div initial={{opacity:0}} animate={{opacity:1}}>
-        <SuitcaseLock lockId="social_platforms" title="منصات التواصل — منطقة خاصة"><SocialConfigManager /></SuitcaseLock>aseLock>
+        <SuitcaseLock lockId="social_platforms" title="منصات التواصل — منطقة خاصة"><SocialConfigManager /></SuitcaseLock>
       </motion.div>
       <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} className="lg:col-span-2 glass rounded-2xl p-6">
         <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2"><Share2 className="w-5 h-5 text-out-gold"/>منصات التواصل الاجتماعي</h2>
