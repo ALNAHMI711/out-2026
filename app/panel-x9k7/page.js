@@ -16,6 +16,7 @@ export default function AdminProductionPage() {
   const [designs, setDesigns] = useState([]), [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false), [error, setError] = useState('');
   const [settingsOpen, setSettingsOpen] = useState(false), [settingsUnlocked, setSettingsUnlocked] = useState(false);
+  const [settingsLockToken, setSettingsLockToken] = useState('');
   const [settingsPassword, setSettingsPassword] = useState(''), [settingsError, setSettingsError] = useState('');
   const [settings, setSettings] = useState(EMPTY_SETTINGS), [settingsNotice, setSettingsNotice] = useState('');
   const [settingsSaving, setSettingsSaving] = useState(false);
@@ -70,6 +71,7 @@ export default function AdminProductionPage() {
         return;
       }
       setSettingsUnlocked(true);
+      setSettingsLockToken(data.sessionToken || '');
       setSettingsPassword('');
       setSettingsNotice('');
     } catch {
@@ -85,7 +87,7 @@ export default function AdminProductionPage() {
   async function saveSettings(event) {
     event.preventDefault(); setSettingsSaving(true); setSettingsError(''); setSettingsNotice('');
     try {
-      const response = await fetch('/api/brand-settings', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brandTitle: settings.brandTitle, email: settings.email, brandLogo: settings.brandLogo }) });
+      const response = await fetch('/api/brand-settings', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json', 'X-Lock-Session': settingsLockToken }, body: JSON.stringify({ brandTitle: settings.brandTitle, email: settings.email, brandLogo: settings.brandLogo }) });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'تعذر حفظ الإعدادات');
       setSettings({ ...EMPTY_SETTINGS, ...(data.settings || {}) }); setSettingsNotice('تم حفظ الإعدادات في قاعدة البيانات.');
@@ -100,7 +102,7 @@ export default function AdminProductionPage() {
     setSettingsSaving(true); setSettingsError(''); setSettingsNotice('');
     try {
       const dataUrl = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); });
-      const response = await fetch('/api/brand-settings', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ logoDataUrl: dataUrl }) });
+      const response = await fetch('/api/brand-settings', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json', 'X-Lock-Session': settingsLockToken }, body: JSON.stringify({ logoDataUrl: dataUrl }) });
       const data = await response.json().catch(() => ({})); if (!response.ok) throw new Error(data.error || 'فشل رفع الشعار');
       setSettings(current => ({ ...current, ...(data.settings || {}) })); setSettingsNotice('تم رفع الشعار وحفظ رابطه في قاعدة البيانات.');
     } catch (e) { setSettingsError(e.message || 'فشل رفع الشعار'); }
@@ -108,7 +110,7 @@ export default function AdminProductionPage() {
   }
 
   function closeSettings() {
-    setSettingsOpen(false); setSettingsUnlocked(false); setSettingsPassword('');
+    setSettingsOpen(false); setSettingsUnlocked(false); setSettingsLockToken(''); setSettingsPassword('');
     setSettingsError(''); setSettingsNotice('');
   }
 
