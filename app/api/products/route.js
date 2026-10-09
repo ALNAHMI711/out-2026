@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getSupabaseAdmin, supabasePublic } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 
 const ProductSchema = z.object({
   design_id: z.string().uuid(),
@@ -15,21 +15,31 @@ const ProductSchema = z.object({
   is_active: z.boolean().default(false),
 });
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export async function GET(req) {
-  if (!supabasePublic) return NextResponse.json({ error: "Supabase is not configured" }, { status: 503 });
-  const u = new URL(req.url);
-  const category = u.searchParams.get("category");
-  const search = u.searchParams.get("search");
-  const limit = Math.min(Math.max(parseInt(u.searchParams.get("limit") || "24", 10) || 24, 1), 100);
-  let q = supabasePublic.from("products").select("id,slug,name_ar,name_en,price_cents,currency,category,rating,sales_count,designs(image_url,thumbnail_url)").eq("is_active", true).order("sales_count", { ascending: false }).limit(limit);
-  if (category) q = q.eq("category", category);
-  if (search) {
-    const s = search.replace(/[%_]/g, "").slice(0, 100);
-    if (s) q = q.or("name_ar.ilike.%" + s + "%,name_en.ilike.%" + s + "%");
+  try {
+    const admin = getSupabaseAdmin();
+    const u = new URL(req.url);
+    const category = u.searchParams.get("category");
+    const search = u.searchParams.get("search");
+    const limit = Math.min(Math.max(parseInt(u.searchParams.get("limit") || "24", 10) || 24, 1), 100);
+    let q = admin.from("products").select("id,slug,name_ar,name_en,price_cents,currency,category,rating,sales_count,designs(image_url,thumbnail_url)").eq("is_active", true).order("sales_count", {ascending:false}).limit(limit);
+    if (category) q = q.eq("category", category);
+    if (search) {
+      const s = search.replace(/[%_]/g, "").slice(0, 100);
+      if (s) q = q.or("name_ar.ilike.%" + s + "%,name_en.ilike.%" + s + "%");
+    }
+    const {data,error}=await q;
+    if(error) {
+      console.error("[products GET]",error.message);
+      return NextResponse.json({error:"تعذر تحميل المنتجات",code:error.code||"QUERY_FAILED"},{status:500,headers:{"Cache-Control":"no-store"}});
+    }
+    return NextResponse.json({products:data||[]},{headers:{"Cache-Control":"no-store"}});
+  } catch(e) {
+    console.error("[products GET]",e.message);
+    return NextResponse.json({error:"تعذر الاتصال بقاعدة بيانات المنتجات"},{status:503,headers:{"Cache-Control":"no-store"}});
   }
-  const { data, error } = await q;
-  if (error) return NextResponse.json({ error: "تعذر تحميل المنتجات" }, { status: 500 });
-  return NextResponse.json({ products: data || [] }, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function POST(req) {
@@ -40,8 +50,7 @@ export async function POST(req) {
     const admin = getSupabaseAdmin();
     const d = await admin.from("designs").select("id").eq("id", b.design_id).single();
     if (d.error || !d.data) return NextResponse.json({ error: "التصميم غير موجود" }, { status: 400 });
-    const allowed = { ...b, name_es: b.name_es || null, rating: 5, sales_count: 0 };
-    const q = await admin.from("products").insert(allowed).select().single();
+    const q = await admin.from("products").insert({ ...b, name_es: b.name_es || null, rating: 5, sales_count: 0 }).select().single();
     if (q.error) return NextResponse.json({ error: "تعذر إنشاء المنتج" }, { status: 400 });
     return NextResponse.json({ product: q.data }, { status: 201 });
   } catch {
