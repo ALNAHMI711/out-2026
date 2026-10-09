@@ -5,9 +5,9 @@ import { motion } from 'framer-motion';
 import { Palette, Upload, FolderOpen, Sparkles, Globe, RefreshCw, Loader2, AlertCircle, Settings, X, Eye, EyeOff, Save, ArrowRight, LockKeyhole } from 'lucide-react';
 import StatsCard from '@/components/StatsCard';
 import SuitcaseLock from '@/components/SuitcaseLock';
+import PodConfigManager from '@/components/PodConfigManager';
 
-const SETTINGS_STORAGE_KEY = 'out-production-top-settings';
-const EMPTY_SETTINGS = { brandLogo: '', brandTitle: '', email: '', podPassword: '' };
+const EMPTY_SETTINGS = { brandLogo: '', brandTitle: '', email: '' };
 
 export default function AdminProductionPage() {
   const [stats, setStats] = useState(null), [platformStatus, setPlatformStatus] = useState({});
@@ -44,13 +44,14 @@ export default function AdminProductionPage() {
     } catch (e) { setError(e.message || 'فشل التوليد'); } finally { setGenerating(false); }
   }
 
-  function openSettings() {
-    setSettingsError(''); setSettingsNotice(''); setSettingsPassword(''); setSettingsUnlocked(false);
-    setSettingsOpen(true);
+  async function openSettings() {
+    setSettingsError(''); setSettingsNotice(''); setSettingsPassword(''); setSettingsUnlocked(false); setSettingsOpen(true);
     try {
-      const saved = JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) || '{}');
-      setSettings({ ...EMPTY_SETTINGS, ...saved });
-    } catch { setSettings(EMPTY_SETTINGS); }
+      const response = await fetch('/api/brand-settings', { credentials: 'include', cache: 'no-store' });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'تعذر تحميل إعدادات العلامة التجارية');
+      setSettings({ ...EMPTY_SETTINGS, ...(data.settings || {}) });
+    } catch (e) { setSettingsError(e.message || 'تعذر تحميل الإعدادات'); }
   }
 
   async function unlockSettings(event) {
@@ -82,15 +83,29 @@ export default function AdminProductionPage() {
     setSettingsNotice('');
   }
 
-  function saveSettings(event) {
-    event.preventDefault();
-    setSettingsSaving(true);
+  async function saveSettings(event) {
+    event.preventDefault(); setSettingsSaving(true); setSettingsError(''); setSettingsNotice('');
     try {
-      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-      setSettingsNotice('تم حفظ الإعدادات على هذا الجهاز والمتصفح.');
-    } catch {
-      setSettingsError('تعذر الحفظ؛ قد تكون مساحة التخزين ممتلئة أو غير متاحة.');
-    } finally { setSettingsSaving(false); }
+      const response = await fetch('/api/brand-settings', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brandTitle: settings.brandTitle, email: settings.email, brandLogo: settings.brandLogo }) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'تعذر حفظ الإعدادات');
+      setSettings({ ...EMPTY_SETTINGS, ...(data.settings || {}) }); setSettingsNotice('تم حفظ الإعدادات في قاعدة البيانات.');
+    } catch (e) { setSettingsError(e.message || 'تعذر الحفظ'); }
+    finally { setSettingsSaving(false); }
+  }
+
+  async function uploadBrandLogo(event) {
+    const file = event.target.files && event.target.files[0]; if (!file) return;
+    if (!['image/png','image/jpeg','image/webp','image/svg+xml'].includes(file.type)) { setSettingsError('الصيغ المسموحة PNG/JPEG/WEBP/SVG'); return; }
+    if (file.size > 2 * 1024 * 1024) { setSettingsError('الحد الأقصى للصورة 2 ميغابايت'); return; }
+    setSettingsSaving(true); setSettingsError(''); setSettingsNotice('');
+    try {
+      const dataUrl = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); });
+      const response = await fetch('/api/brand-settings', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ logoDataUrl: dataUrl }) });
+      const data = await response.json().catch(() => ({})); if (!response.ok) throw new Error(data.error || 'فشل رفع الشعار');
+      setSettings(current => ({ ...current, ...(data.settings || {}) })); setSettingsNotice('تم رفع الشعار وحفظ رابطه في قاعدة البيانات.');
+    } catch (e) { setSettingsError(e.message || 'فشل رفع الشعار'); }
+    finally { setSettingsSaving(false); event.target.value = ''; }
   }
 
   function closeSettings() {
@@ -126,10 +141,9 @@ export default function AdminProductionPage() {
             <div className="flex gap-3 mt-5"><button type="button" onClick={closeSettings} className="flex-1 rounded-xl border border-out-border px-4 py-3 text-out-silver hover:border-out-gold">رجوع</button><button type="submit" disabled={!settingsPassword || settingsSaving} className="flex-1 rounded-xl bg-gradient-to-r from-out-gold to-out-gold-light px-4 py-3 font-bold text-out-black disabled:opacity-50">تحقق وفتح</button></div>
           </div>
         </form> : <form onSubmit={saveSettings} className="p-5 md:p-7 space-y-5">
-          <div><label htmlFor="brand-logo" className="block text-sm font-bold text-out-silver mb-2">شعار البراند (رابط صورة)</label><input id="brand-logo" type="url" value={settings.brandLogo} onChange={(event) => updateSetting('brandLogo', event.target.value)} placeholder="https://example.com/logo.png" className="w-full rounded-xl border border-out-border bg-out-card px-4 py-3 text-white outline-none focus:border-out-gold" /></div>
+          <div><label htmlFor="brand-logo-file" className="block text-sm font-bold text-out-silver mb-2">شعار البراند</label><label className="inline-flex items-center gap-2 rounded-xl border border-out-gold/60 bg-out-card px-4 py-3 text-out-gold font-bold cursor-pointer"><Upload className="w-5 h-5" />📤 رفع صورة<input id="brand-logo-file" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={uploadBrandLogo} disabled={settingsSaving} className="sr-only" /></label>{settings.brandLogo && <div className="mt-3 flex items-center gap-3"><img src={settings.brandLogo} alt="معاينة شعار البراند" className="h-20 w-20 rounded-xl border border-out-border bg-white object-contain p-2" /><span className="text-xs text-green-400 break-all">رابط الصورة محفوظ</span></div>}<p className="mt-2 text-xs text-out-silver/70">PNG/JPEG/WEBP/SVG — حتى 2 ميغابايت.</p></div>
           <div><label htmlFor="brand-title" className="block text-sm font-bold text-out-silver mb-2">عنوان البراند</label><input id="brand-title" type="text" value={settings.brandTitle} onChange={(event) => updateSetting('brandTitle', event.target.value)} maxLength={120} placeholder="OUT PREMIUM CRAFTSMANSHIP & APEX" className="w-full rounded-xl border border-out-border bg-out-card px-4 py-3 text-white outline-none focus:border-out-gold" /></div>
           <div><label htmlFor="brand-email" className="block text-sm font-bold text-out-silver mb-2">البريد الإلكتروني</label><input id="brand-email" type="email" value={settings.email} onChange={(event) => updateSetting('email', event.target.value)} maxLength={254} placeholder="you@example.com" className="w-full rounded-xl border border-out-border bg-out-card px-4 py-3 text-white outline-none focus:border-out-gold" /></div>
-          <div><label htmlFor="pod-password" className="block text-sm font-bold text-out-silver mb-2">كلمة السر الموحدة لحسابات POD</label><div className="relative"><input id="pod-password" type={showPodPassword ? 'text' : 'password'} autoComplete="new-password" value={settings.podPassword} onChange={(event) => updateSetting('podPassword', event.target.value)} maxLength={256} placeholder="أدخل كلمة السر الموحدة" className="w-full rounded-xl border border-out-border bg-out-card px-4 py-3 pl-12 text-white outline-none focus:border-out-gold" /><button type="button" onClick={() => setShowPodPassword((visible) => !visible)} className="absolute left-3 top-1/2 -translate-y-1/2 text-out-silver hover:text-out-gold" aria-label={showPodPassword ? 'إخفاء كلمة السر' : 'إظهار كلمة السر'}>{showPodPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button></div><p className="mt-2 text-xs text-amber-300">تنبيه: الحفظ المؤقت يتم في localStorage على هذا المتصفح، وقد تكون كلمة السر مقروءة لأي سكربت يعمل في الموقع. لا تستخدم كلمة سر مهمة أو معاد استخدامها؛ التخزين الآمن على الخادم هو الخيار المناسب للإنتاج.</p></div>
           {settingsError && <p role="alert" className="text-sm text-red-400">{settingsError}</p>}
           {settingsNotice && <p role="status" className="text-sm text-green-400">{settingsNotice}</p>}
           <div className="flex flex-col sm:flex-row gap-3 pt-2"><button type="submit" disabled={settingsSaving} className="flex-1 rounded-xl bg-gradient-to-r from-out-gold to-out-gold-light px-4 py-3 font-bold text-out-black flex items-center justify-center gap-2 disabled:opacity-50"><Save className="w-5 h-5" />{settingsSaving ? 'جاري الحفظ...' : 'حفظ'}</button><button type="button" onClick={() => { setSettingsUnlocked(false); setSettingsPassword(''); setSettingsError(''); setSettingsNotice(''); }} className="rounded-xl border border-out-border px-4 py-3 text-out-silver hover:border-out-gold flex items-center justify-center gap-2"><ArrowRight className="w-4 h-4" />رجوع</button><button type="button" onClick={closeSettings} className="rounded-xl border border-red-500/40 px-4 py-3 text-red-300 hover:bg-red-500/10">إخفاء</button></div>
@@ -149,7 +163,7 @@ export default function AdminProductionPage() {
         {designs.length === 0 ? <div className="text-center py-12 text-out-silver/60"><Palette className="w-12 h-12 mx-auto mb-3 opacity-30"/><p>لا توجد تصاميم مولدة في هذه الجلسة.</p><p className="text-xs mt-2">الإحصائيات أعلاه تأتي مباشرة من قاعدة البيانات.</p></div> : <div className="grid grid-cols-2 md:grid-cols-3 gap-3">{designs.slice(0,9).map((d)=><div key={d.id || d.image_url} className="relative aspect-square rounded-xl overflow-hidden border border-out-border"><Image src={d.image_url} alt={d.title || 'OUT design'} fill sizes="(max-width: 1024px) 50vw, 66vw" className="object-cover" loading="lazy"/></div>)}</div>}
       </motion.div>
       <div>
-        <SuitcaseLock lockId="pod_sites" title="مواقع POD"><div className="space-y-2 max-h-80 overflow-y-auto">{Object.entries(platformStatus).map(([key,p])=><div key={key} className="bg-out-card border border-out-border rounded-lg p-3 flex justify-between items-center gap-3"><div><p className="text-white text-sm font-bold">{p.name}</p><p className="text-out-silver/60 text-xs">{p.description || p.apiType || 'منصة POD'}</p></div><span className={p.configured ? 'text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400' : 'text-xs px-2 py-1 rounded-full bg-out-silver/20 text-out-silver'}>{p.configured ? 'مهيأ' : 'غير مهيأ'}</span></div>)}</div></SuitcaseLock>
+        <SuitcaseLock lockId="pod_sites" title="مواقع POD"><PodConfigManager /></SuitcaseLock>
         {stats?.countryRevenue && Object.keys(stats.countryRevenue).length > 0 && <div className="glass rounded-2xl p-5 mt-5"><div className="flex items-center gap-2 text-out-gold mb-3"><Globe className="w-5 h-5"/><h3 className="font-bold">الإيرادات حسب الدولة</h3></div>{Object.entries(stats.countryRevenue).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([country,revenue])=><div key={country} className="mb-3"><div className="flex justify-between text-sm text-out-silver mb-1"><span>{country}</span><span>{'$' + Number(revenue).toFixed(2)}</span></div></div>)}</div>}
       </div>
     </div>

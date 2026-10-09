@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { DollarSign, TrendingUp, Users, ShoppingCart, Instagram, Facebook, Youtube, Music, Share2, Bot, RefreshCw, AlertCircle, ShieldCheck, Activity } from 'lucide-react';
 import StatsCard from '@/components/StatsCard';
 import SuitcaseLock from '@/components/SuitcaseLock';
+import SocialConfigManager from '@/components/SocialConfigManager';
 const ICONS = { Instagram, Facebook, Youtube, Music, Share2 };
 
 export default function AdminMarketingPage() {
@@ -38,18 +39,7 @@ export default function AdminMarketingPage() {
 
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <motion.div initial={{opacity:0}} animate={{opacity:1}}>
-        <SuitcaseLock lockId="social_platforms" title="منصات التواصل — منطقة خاصة">
-          <div className="rounded-xl border border-out-gold/40 bg-gradient-to-br from-out-gold/15 to-transparent p-4 mb-4">
-            <div className="flex items-center gap-2 mb-3 text-out-gold"><ShieldCheck className="w-5 h-5"/><h3 className="font-bold">العداد السري للتواصل الاجتماعي</h3></div>
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div className="rounded-lg bg-out-black/60 p-3"><p className="text-2xl font-black text-white">{socialCounts.total}</p><p className="text-[11px] text-out-silver mt-1">إجمالي المنصات</p></div>
-              <div className="rounded-lg bg-out-black/60 p-3"><p className="text-2xl font-black text-green-400">{socialCounts.configured}</p><p className="text-[11px] text-out-silver mt-1">مهيأة بالمفاتيح</p></div>
-              <div className="rounded-lg bg-out-black/60 p-3"><p className="text-2xl font-black text-out-gold">{socialCounts.automation}</p><p className="text-[11px] text-out-silver mt-1">مهيأة ويدعم API</p></div>
-            </div>
-            <p className="text-[11px] text-out-silver/70 mt-3">العداد يعتمد على إعدادات البيئة، ولا يعني أن الحسابات موثّقة أو أن النشر نجح فعليًا.</p>
-          </div>
-          <div className="space-y-2">{Object.entries(socialStatus).map(([key,s])=>{const Icon=ICONS[s.icon]||Share2;return <div key={key} className="bg-out-card border border-out-border rounded-lg p-3 flex items-center justify-between"><div className="flex items-center gap-3"><Icon className="w-6 h-6 text-out-gold"/><span className="text-white text-sm">{s.name}</span></div><span className={s.configured?'text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400':'text-xs px-2 py-1 rounded-full bg-out-silver/20 text-out-silver'}>{s.configured?'مهيأ':'غير مهيأ'}</span></div>})}</div>
-        </SuitcaseLock>
+        <SuitcaseLock lockId="social_platforms" title="منصات التواصل — منطقة خاصة"><SocialConfigManager /></SuitcaseLock>aseLock>
       </motion.div>
       <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} className="lg:col-span-2 glass rounded-2xl p-6">
         <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2"><Share2 className="w-5 h-5 text-out-gold"/>منصات التواصل الاجتماعي</h2>
