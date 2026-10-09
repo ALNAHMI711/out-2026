@@ -17,21 +17,35 @@ export async function POST(req){
   try{
     const body=await req.json(), password=body?.password;
     if(typeof password!=="string"||!password) return NextResponse.json({error:"كلمة السر مطلوبة"},{status:400});
-    const configs=[
-      ["production",process.env.OUT_PRODUCTION_PASSWORD_HASH],
-      ["marketing",process.env.OUT_MARKETING_PASSWORD_HASH],
-      ["owner",process.env.OUT_MASTER_PASSWORD_HASH]
-    ];
+
+    // Use deployment environment secrets when configured; keep bcrypt hashes supported.
+    // Do not embed reusable administrator passwords in source control.
     let area=null,role=null;
-    for(const [a,h] of configs) if(h&&await bcrypt.compare(password,h)){area=a;role=a==="owner"?"owner":"admin";break}
+    const plaintextConfigs=[
+      ["owner",process.env.OUT_MASTER_PASSWORD],
+      ["production",process.env.OUT_PRODUCTION_PASSWORD],
+      ["marketing",process.env.OUT_MARKETING_PASSWORD]
+    ];
+    for(const [a,secret] of plaintextConfigs){
+      if(secret && password===secret){area=a;role=a==="owner"?"owner":"admin";break}
+    }
     if(!area){
-      // Diagnostics stay in server logs; never expose environment configuration to unauthenticated clients.
+      const hashConfigs=[
+        ["owner",process.env.OUT_MASTER_PASSWORD_HASH],
+        ["production",process.env.OUT_PRODUCTION_PASSWORD_HASH],
+        ["marketing",process.env.OUT_MARKETING_PASSWORD_HASH]
+      ];
+      for(const [a,hash] of hashConfigs){
+        if(hash && await bcrypt.compare(password,hash)){area=a;role=a==="owner"?"owner":"admin";break}
+      }
+    }
+    if(!area){
       console.warn("[auth/login] Authentication failed", {
         inputLength: password.length,
-        configuredHashes: {
-          production: Boolean(process.env.OUT_PRODUCTION_PASSWORD_HASH),
-          marketing: Boolean(process.env.OUT_MARKETING_PASSWORD_HASH),
-          master: Boolean(process.env.OUT_MASTER_PASSWORD_HASH)
+        configuredSecrets: {
+          production: Boolean(process.env.OUT_PRODUCTION_PASSWORD || process.env.OUT_PRODUCTION_PASSWORD_HASH),
+          marketing: Boolean(process.env.OUT_MARKETING_PASSWORD || process.env.OUT_MARKETING_PASSWORD_HASH),
+          master: Boolean(process.env.OUT_MASTER_PASSWORD || process.env.OUT_MASTER_PASSWORD_HASH)
         }
       });
       register(ipv);
