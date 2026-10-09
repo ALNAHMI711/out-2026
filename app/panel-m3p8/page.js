@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { DollarSign, TrendingUp, Users, ShoppingCart, Instagram, Facebook, Youtube, Music, Share2, Bot, RefreshCw, AlertCircle, ShieldCheck, Activity } from 'lucide-react';
+import { DollarSign, TrendingUp, Users, ShoppingCart, Instagram, Facebook, Youtube, Music, Share2, Bot, RefreshCw, AlertCircle, Activity } from 'lucide-react';
 import StatsCard from '@/components/StatsCard';
 import SuitcaseLock from '@/components/SuitcaseLock';
 import SocialConfigManager from '@/components/SocialConfigManager';
