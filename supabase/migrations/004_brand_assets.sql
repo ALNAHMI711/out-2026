@@ -3,7 +3,21 @@ VALUES ('brand-assets','brand-assets',true,2097152,ARRAY['image/png','image/jpeg
 ON CONFLICT (id) DO UPDATE SET public=true,file_size_limit=2097152,allowed_mime_types=ARRAY['image/png','image/jpeg','image/webp','image/svg+xml'];
 DROP POLICY IF EXISTS brand_assets_public_read ON storage.objects;
 CREATE POLICY brand_assets_public_read ON storage.objects FOR SELECT USING (bucket_id='brand-assets');
--- Uploads go through the role-checked server route; no direct client writes.
+DROP POLICY IF EXISTS brand_assets_admin_insert ON storage.objects;
+CREATE POLICY brand_assets_admin_insert ON storage.objects FOR INSERT WITH CHECK (
+ bucket_id='brand-assets' AND auth.uid() IN (SELECT id FROM public.profiles WHERE role IN ('owner','admin'))
+);
+DROP POLICY IF EXISTS brand_assets_admin_update ON storage.objects;
+CREATE POLICY brand_assets_admin_update ON storage.objects FOR UPDATE USING (
+ bucket_id='brand-assets' AND auth.uid() IN (SELECT id FROM public.profiles WHERE role IN ('owner','admin'))
+) WITH CHECK (
+ bucket_id='brand-assets' AND auth.uid() IN (SELECT id FROM public.profiles WHERE role IN ('owner','admin'))
+);
+DROP POLICY IF EXISTS brand_assets_admin_delete ON storage.objects;
+CREATE POLICY brand_assets_admin_delete ON storage.objects FOR DELETE USING (
+ bucket_id='brand-assets' AND auth.uid() IN (SELECT id FROM public.profiles WHERE role IN ('owner','admin'))
+);
+-- The application upload API separately checks its signed administrator JWT and uses server-only service credentials.
 CREATE TABLE IF NOT EXISTS public.brand_settings (
  id integer PRIMARY KEY DEFAULT 1 CHECK(id=1),
  brand_logo_url text, brand_title text NOT NULL DEFAULT '', contact_email text NOT NULL DEFAULT '',
