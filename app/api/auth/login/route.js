@@ -53,7 +53,7 @@ export async function POST(req){
     }
     if(!process.env.JWT_SECRET) throw new Error("JWT_SECRET missing");
     const token=await new SignJWT({role,area}).setProtectedHeader({alg:"HS256"}).setIssuedAt().setExpirationTime("24h").setIssuer("out-2026").sign(new TextEncoder().encode(process.env.JWT_SECRET));
-    const res=NextResponse.json({success:true,redirect:area==="marketing"?"/admin-marketing":"/admin-production"});
+    const res=NextResponse.json({success:true,redirect:area==="marketing"?"/panel-m3p8":"/panel-x9k7"});
     res.cookies.set("out_session",token,{httpOnly:true,secure:process.env.NODE_ENV==="production",sameSite:"strict",maxAge:86400,path:"/"});
     attempts.delete(ipv);
     return res;

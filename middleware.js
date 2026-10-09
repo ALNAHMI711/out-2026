@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
-const rules = [["/admin-production", "production"], ["/admin-marketing", "marketing"]];
+const rules = [["/panel-x9k7", "production"], ["/panel-m3p8", "marketing"]];
 const protectedApi = [
   ["/api/designs", ["POST"], "production"],
   ["/api/pod", ["GET", "POST", "PUT", "PATCH", "DELETE"], "production"],
@@ -54,7 +54,7 @@ export async function middleware(req) {
 
 export const config = {
   matcher: [
-    "/admin-production/:path*", "/admin-marketing/:path*",
+    "/panel-x9k7/:path*", "/panel-m3p8/:path*",
     "/api/designs/:path*", "/api/pod/:path*", "/api/orders/:path*",
     "/api/social/:path*", "/api/stats/:path*", "/api/products/:path*"
   ]
